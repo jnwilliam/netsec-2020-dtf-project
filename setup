@@ -6,4 +6,19 @@ set -euo pipefail
 # prints each line executed
 set -x
 
-echo "Your solution goes here"
+# delete problematic firewall rule
+sudo nft delete rule inet filter input handle 5
+
+# update packages
+sudo apt-get update
+sudo apt-get upgrade -y
+
+# firewall rules for database server (only connectable from grader.dtf.netsec.inf.ethz.ch)
+sudo nft add chain inet filter database
+sudo nft add rule inet filter input tcp dport 5432 jump database
+sudo nft add rule inet filter database ip saddr 129.132.121.162 accept
+sudo nft add rule inet filter database drop
+
+# fix nginx conf error
+sudo sed -i "s/alias \/var\/www\/app\//alias \/var\/www\/app/g" /etc/nginx/sites-enabled/company-app.conf
+sudo systemctl restart nginx
