@@ -24,6 +24,7 @@ sudo sed -i "s/alias \/var\/www\/app\//alias \/var\/www\/app/g" /etc/nginx/sites
 sudo systemctl restart nginx
 
 # add certificate to webserver and fix tls issues
+sudo apt-get install -y certbot
 echo "server {
         listen 80 default_server;
         listen [::]:80 default_server;
