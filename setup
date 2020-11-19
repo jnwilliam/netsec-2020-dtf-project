@@ -22,3 +22,37 @@ sudo nft add rule inet filter database drop
 # fix nginx conf error
 sudo sed -i "s/alias \/var\/www\/app\//alias \/var\/www\/app/g" /etc/nginx/sites-enabled/company-app.conf
 sudo systemctl restart nginx
+
+# add certificate to webserver and fix tls issues
+echo "server {
+        listen 80 default_server;
+        listen [::]:80 default_server;
+
+        server_name _;
+
+        return 301 https://\$host\$request_uri;
+}
+
+
+server {
+    listen 443 ssl default_server;
+
+    server_name _;
+
+    root /var/www/html;
+
+    ssl_certificate /etc/letsencrypt/live/williamj.student.dtf.netsec.inf.ethz.ch/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/williamj.student.dtf.netsec.inf.ethz.ch/privkey.pem;
+
+        location / {
+        autoindex on;
+        }
+
+    location /company/ {
+        proxy_pass http://localhost:1234/;
+    }
+}
+" | sudo tee /etc/nginx/sites-enabled/default-site.conf
+sudo certbot register --server https://acme.dtf.netsec.inf.ethz.ch/acme/default/directory -m williamj@student.ethz.ch --agree-tos -n
+sudo certbot certonly --server https://acme.dtf.netsec.inf.ethz.ch/acme/default/directory --webroot -w /var/www/html -d williamj.student.dtf.netsec.inf.ethz.ch
+sudo systemctl restart nginx
